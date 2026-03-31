@@ -25,6 +25,9 @@ export class TwitchTrigger implements BaseTrigger {
       return;
     }
 
+    await this.listener?.stop();
+    this.listener = null;
+
     const apiClient = buildApiClient();
     this.rewardId = await ensureRewardExists(apiClient);
 

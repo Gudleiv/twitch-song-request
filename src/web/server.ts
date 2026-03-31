@@ -12,7 +12,7 @@ import { config } from '../config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export async function buildServer() {
+export async function buildServer(onTwitchAuthorized: () => Promise<void>) {
   const app = Fastify({ logger: true });
 
   await app.register(fastifyFormbody);
@@ -42,7 +42,7 @@ export async function buildServer() {
   // Публичные маршруты — OAuth callbacks (редиректят сюда Twitch/Spotify без нашей авторизации)
   app.get<{ Querystring: { code?: string; error?: string } }>(
     '/auth/twitch/callback',
-    (req, reply) => twitchCallback(req, reply)
+    (req, reply) => twitchCallback(req, reply, onTwitchAuthorized)
   );
   app.get<{ Querystring: { code?: string; error?: string } }>(
     '/auth/spotify/callback',
@@ -61,7 +61,8 @@ export async function buildServer() {
   return app;
 }
 
-export async function startServer(): Promise<void> {
-  const app = await buildServer();
+export async function startServer(onTwitchAuthorized: () => Promise<void>) {
+  const app = await buildServer(onTwitchAuthorized);
   await app.listen({ port: config.port, host: '0.0.0.0' });
+  return app;
 }

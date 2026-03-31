@@ -30,7 +30,7 @@ export function buildApiClient(): ApiClient {
       refreshToken: stored.refreshToken ?? null,
       expiresIn: stored.expiresAt ? Math.floor((stored.expiresAt - Date.now()) / 1000) : null,
       obtainmentTimestamp: stored.expiresAt ? stored.expiresAt - 3600_000 : Date.now(),
-      scope: ['channel:read:redemptions'],
+      scope: ['channel:read:redemptions', 'channel:manage:redemptions'],
     });
   }
 

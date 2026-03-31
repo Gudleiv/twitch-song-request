@@ -85,9 +85,57 @@ export class SpotifyPlayer implements BasePlayer {
 
     if (!res.ok) {
       const body = await res.text();
+
+      // Если нет активного устройства — попробуем активировать первое доступное
+      if (res.status === 404 && body.includes('NO_ACTIVE_DEVICE')) {
+        const activated = await this.activateFirstDevice(accessToken);
+        if (!activated) {
+          return { success: false, error: 'Нет активных устройств Spotify. Открой Spotify на любом устройстве.' };
+        }
+
+        // Повторная попытка после активации устройства
+        const retry = await fetch(
+          `https://api.spotify.com/v1/me/player/queue?uri=${encodeURIComponent(track.uri)}`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+
+        if (!retry.ok) {
+          const retryBody = await retry.text();
+          return { success: false, error: `Spotify API error: ${retry.status} ${retryBody}` };
+        }
+
+        return { success: true, track };
+      }
+
       return { success: false, error: `Spotify API error: ${res.status} ${body}` };
     }
 
     return { success: true, track };
+  }
+
+  private async activateFirstDevice(accessToken: string): Promise<boolean> {
+    const res = await fetch('https://api.spotify.com/v1/me/player/devices', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!res.ok) return false;
+
+    const data = await res.json() as { devices: { id: string; is_active: boolean }[] };
+    const device = data.devices[0];
+    if (!device) return false;
+
+    const transfer = await fetch('https://api.spotify.com/v1/me/player', {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ device_ids: [device.id], play: false }),
+    });
+
+    return transfer.ok || transfer.status === 204;
   }
 }

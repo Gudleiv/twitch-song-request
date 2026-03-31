@@ -4,19 +4,21 @@ import { SpotifyPlayer } from './player/spotify/spotify.player.js';
 import { TwitchTrigger } from './triggers/twitch/twitch.trigger.js';
 import { QueueService } from './queue/queue.service.js';
 import { startServer } from './web/server.js';
+import type { SongRequestEventWithRedemption } from './triggers/twitch/twitch.trigger.js';
 
 async function main() {
   initStorage();
   console.log('[App] Хранилище инициализировано');
 
-  await startServer();
-  console.log('[App] Веб-сервер запущен');
-
   const player = new SpotifyPlayer();
   const queueService = new QueueService(player);
   const trigger = new TwitchTrigger();
 
-  await trigger.start(async (event, fulfill, cancel) => {
+  const handleRequest = async (
+    event: SongRequestEventWithRedemption,
+    fulfill: () => Promise<void>,
+    cancel: () => Promise<void>
+  ) => {
     console.log(`[Queue] Запрос от ${event.requestedBy}: ${event.query}`);
 
     const result = await queueService.handle({
@@ -31,11 +33,19 @@ async function main() {
     } else {
       await cancel().catch(err => console.warn('[Twitch] Ошибка отмены redemption:', err));
     }
-  });
+  };
+
+  const startTrigger = () => trigger.start(handleRequest);
+
+  const server = await startServer(startTrigger);
+  console.log('[App] Веб-сервер запущен');
+
+  await startTrigger();
 
   const shutdown = async () => {
     console.log('[App] Завершение работы...');
     await trigger.stop();
+    await server.close();
     process.exit(0);
   };
 

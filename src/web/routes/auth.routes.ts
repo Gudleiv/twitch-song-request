@@ -49,7 +49,8 @@ export async function spotifyCallback(
 
 export async function twitchCallback(
   req: FastifyRequest<CallbackQuery>,
-  reply: FastifyReply
+  reply: FastifyReply,
+  onAuthorized?: () => Promise<void>
 ): Promise<void> {
   if (req.query.error) {
     return reply.view('callback', {
@@ -120,6 +121,10 @@ export async function twitchCallback(
 
     const apiClient = buildApiClient();
     await ensureRewardExists(apiClient);
+
+    await onAuthorized?.().catch(err =>
+      console.warn('[Twitch] Ошибка запуска триггера после авторизации:', err)
+    );
 
     return reply.view('callback', {
       title: 'Twitch',
