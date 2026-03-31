@@ -8,5 +8,14 @@ services:
       - "3000:3000"
     volumes:
       - ./data:/app/data
-    env_file: .env
+    environment:
+      - PORT=${PORT}
+      - BASE_URL=${BASE_URL}
+      - TWITCH_CLIENT_ID=${TWITCH_CLIENT_ID}
+      - TWITCH_CLIENT_SECRET=${TWITCH_CLIENT_SECRET}
+      - TWITCH_USER_ID=${TWITCH_USER_ID}
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
+      - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - DATA_DIR=${DATA_DIR}
     restart: unless-stopped
