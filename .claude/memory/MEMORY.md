@@ -1,0 +1,1 @@
+- [Project Architecture](project_architecture.md) — стек, структура, ключевые детали реализации Twitch→Spotify сервиса

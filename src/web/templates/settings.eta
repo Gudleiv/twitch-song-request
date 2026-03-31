@@ -1,0 +1,18 @@
+<section class="card">
+  <h2>Настройки</h2>
+  <form method="POST" action="/settings">
+    <label>
+      <input type="checkbox" name="filterExplicit" value="true"
+        <%= it.settings.filterExplicit ? 'checked' : '' %>>
+      Фильтровать explicit-треки
+    </label>
+
+    <label>
+      Максимальная длина трека (секунды, 0 — без ограничений)
+      <input type="number" name="maxDurationSeconds" min="0"
+        value="<%= it.settings.maxDurationSeconds ?? 0 %>">
+    </label>
+
+    <button type="submit" class="btn">Сохранить</button>
+  </form>
+</section>

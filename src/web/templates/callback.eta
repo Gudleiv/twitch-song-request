@@ -1,0 +1,5 @@
+<section class="card">
+  <h2><%= it.success ? '✓ Успешно' : '✗ Ошибка' %></h2>
+  <p><%= it.message %></p>
+  <a class="btn" href="/setup">← Назад</a>
+</section>

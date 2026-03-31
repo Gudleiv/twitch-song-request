@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= it.title %> — Song Request</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>Song Request</h1>
+    <nav>
+      <a href="/setup">Подключение</a>
+      <a href="/settings">Настройки</a>
+    </nav>
+  </header>
+  <main>
+    <%~ it.body %>
+  </main>
+</body>
+</html>

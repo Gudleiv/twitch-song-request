@@ -1,0 +1,21 @@
+<section class="card">
+  <h2>Подключение аккаунтов</h2>
+
+  <div class="account-row">
+    <span>Twitch</span>
+    <% if (it.twitchOk) { %>
+      <span class="badge ok">Подключён</span>
+    <% } else { %>
+      <a class="btn" href="/auth/twitch">Подключить</a>
+    <% } %>
+  </div>
+
+  <div class="account-row">
+    <span>Spotify</span>
+    <% if (it.spotifyOk) { %>
+      <span class="badge ok">Подключён</span>
+    <% } else { %>
+      <a class="btn" href="/auth/spotify">Подключить</a>
+    <% } %>
+  </div>
+</section>
