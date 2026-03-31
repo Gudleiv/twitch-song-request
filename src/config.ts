@@ -20,5 +20,7 @@ export const config = {
     redirectUri: () => `${config.baseUrl}/auth/spotify/callback`,
   },
 
+  adminPassword: requireEnv('ADMIN_PASSWORD'),
+
   dataDir: process.env.DATA_DIR ?? './data',
 } as const;

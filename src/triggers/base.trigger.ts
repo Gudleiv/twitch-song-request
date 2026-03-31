@@ -4,8 +4,12 @@ export interface SongRequestEvent {
 }
 
 export interface BaseTrigger {
-  /** Запустить прослушивание событий */
-  start(onRequest: (event: SongRequestEvent) => Promise<void>): Promise<void>;
-  /** Остановить */
+  start(
+    onRequest: (
+      event: SongRequestEvent,
+      fulfill: () => Promise<void>,
+      cancel: () => Promise<void>
+    ) => Promise<void>
+  ): Promise<void>;
   stop(): Promise<void>;
 }

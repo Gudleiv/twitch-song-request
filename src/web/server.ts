@@ -2,10 +2,11 @@ import Fastify from 'fastify';
 import fastifyView from '@fastify/view';
 import fastifyStatic from '@fastify/static';
 import fastifyFormbody from '@fastify/formbody';
+import fastifyBasicAuth from '@fastify/basic-auth';
 import { Eta } from 'eta';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { authRoutes } from './routes/auth.routes.js';
+import { authRoutes, twitchCallback, spotifyCallback } from './routes/auth.routes.js';
 import { settingsRoutes } from './routes/settings.routes.js';
 import { config } from '../config.js';
 
@@ -14,12 +15,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export async function buildServer() {
   const app = Fastify({ logger: true });
 
-  const eta = new Eta({ views: path.join(__dirname, 'templates') });
-
   await app.register(fastifyFormbody);
 
   await app.register(fastifyView, {
-    engine: { eta },
+    engine: { eta: new Eta({ views: path.join(__dirname, 'templates') }) },
     root: path.join(__dirname, 'templates'),
     layout: 'layout',
   });
@@ -29,10 +28,35 @@ export async function buildServer() {
     prefix: '/static/',
   });
 
-  await app.register(authRoutes);
-  await app.register(settingsRoutes);
+  await app.register(fastifyBasicAuth, {
+    validate(username, password, _req, _reply, done) {
+      if (username === 'admin' && password === config.adminPassword) {
+        done();
+      } else {
+        done(new Error('Unauthorized'));
+      }
+    },
+    authenticate: { realm: 'Song Request Admin' },
+  });
 
-  app.get('/', async (_req, reply) => reply.redirect('/setup'));
+  // Публичные маршруты — OAuth callbacks (редиректят сюда Twitch/Spotify без нашей авторизации)
+  app.get<{ Querystring: { code?: string; error?: string } }>(
+    '/auth/twitch/callback',
+    (req, reply) => twitchCallback(req, reply)
+  );
+  app.get<{ Querystring: { code?: string; error?: string } }>(
+    '/auth/spotify/callback',
+    (req, reply) => spotifyCallback(req, reply)
+  );
+
+  // Защищённые маршруты — требуют Basic Auth
+  await app.register(async (priv) => {
+    priv.addHook('preHandler', app.basicAuth);
+
+    priv.get('/', async (_req, reply) => reply.redirect('/setup'));
+    await priv.register(authRoutes);
+    await priv.register(settingsRoutes);
+  });
 
   return app;
 }

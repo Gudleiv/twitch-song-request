@@ -6,30 +6,33 @@ import { QueueService } from './queue/queue.service.js';
 import { startServer } from './web/server.js';
 
 async function main() {
-  // 1. Инициализация хранилища
   initStorage();
   console.log('[App] Хранилище инициализировано');
 
-  // 2. Запуск веб-сервера (OAuth callbacks + UI)
   await startServer();
   console.log('[App] Веб-сервер запущен');
 
-  // 3. Инициализация плеера и сервиса очереди
   const player = new SpotifyPlayer();
   const queueService = new QueueService(player);
-
-  // 4. Запуск Twitch триггера
   const trigger = new TwitchTrigger();
-  await trigger.start(async (event) => {
+
+  await trigger.start(async (event, fulfill, cancel) => {
     console.log(`[Queue] Запрос от ${event.requestedBy}: ${event.query}`);
+
     const result = await queueService.handle({
       query: event.query,
       requestedBy: event.requestedBy,
     });
+
     console.log(`[Queue] ${result.success ? '✓' : '✗'} ${result.message}`);
+
+    if (result.success) {
+      await fulfill().catch(err => console.warn('[Twitch] Ошибка подтверждения redemption:', err));
+    } else {
+      await cancel().catch(err => console.warn('[Twitch] Ошибка отмены redemption:', err));
+    }
   });
 
-  // Graceful shutdown
   const shutdown = async () => {
     console.log('[App] Завершение работы...');
     await trigger.stop();

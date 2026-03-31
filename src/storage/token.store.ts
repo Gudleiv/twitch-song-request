@@ -32,6 +32,12 @@ export function initStorage(): void {
       key   TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS reward (
+      id          INTEGER PRIMARY KEY CHECK (id = 1),
+      rewardId    TEXT NOT NULL,
+      rewardTitle TEXT NOT NULL
+    );
   `);
 }
 
@@ -60,6 +66,25 @@ export function getSettings(): Settings {
     filterExplicit: map['filterExplicit'] === 'true',
     maxDurationSeconds: map['maxDurationSeconds'] ? parseInt(map['maxDurationSeconds'], 10) : null,
   };
+}
+
+export interface RewardRecord {
+  rewardId: string;
+  rewardTitle: string;
+}
+
+export function saveReward(record: RewardRecord): void {
+  db.prepare(`
+    INSERT INTO reward (id, rewardId, rewardTitle) VALUES (1, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      rewardId    = excluded.rewardId,
+      rewardTitle = excluded.rewardTitle
+  `).run(record.rewardId, record.rewardTitle);
+}
+
+export function getReward(): RewardRecord | undefined {
+  const row = db.prepare('SELECT rewardId, rewardTitle FROM reward WHERE id = 1').get();
+  return row as unknown as RewardRecord | undefined;
 }
 
 export function saveSettings(settings: Partial<Settings>): void {
