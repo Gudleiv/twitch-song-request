@@ -1,7 +1,7 @@
 import { RefreshingAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
 import { config } from '../../config.js';
-import { saveToken, getToken } from '../../storage/token.store.js';
+import { saveToken, getToken, deleteToken } from '../../storage/token.store.js';
 
 let authProvider: RefreshingAuthProvider | null = null;
 let apiClient: ApiClient | null = null;
@@ -46,4 +46,18 @@ export function getAuthProvider(): RefreshingAuthProvider {
 
 export function isTwitchAuthorized(): boolean {
   return getToken('twitch') !== undefined;
+}
+
+export function resetTwitchAuth(): void {
+  deleteToken('twitch');
+  authProvider = null;
+  apiClient = null;
+}
+
+export function isTwitchAuthError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const name = (err as { name?: string }).name;
+  if (name === 'CachedRefreshFailureError' || name === 'InvalidTokenError') return true;
+  const message = (err as { message?: string }).message ?? '';
+  return /user context.*has been disabled|invalid (access|refresh) token|refresh.*fail/i.test(message);
 }

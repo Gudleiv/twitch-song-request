@@ -40,7 +40,9 @@ async function main() {
   const server = await startServer(startTrigger);
   console.log('[App] Веб-сервер запущен');
 
-  await startTrigger();
+  await startTrigger().catch((err) => {
+    console.warn('[App] Не удалось запустить Twitch-триггер. Откройте /setup для подключения. Причина:', err);
+  });
 
   const shutdown = async () => {
     console.log('[App] Завершение работы...');

@@ -58,6 +58,10 @@ export function getToken(provider: TokenRecord['provider']): TokenRecord | undef
   return row as unknown as TokenRecord;
 }
 
+export function deleteToken(provider: TokenRecord['provider']): void {
+  db.prepare('DELETE FROM tokens WHERE provider = ?').run(provider);
+}
+
 export function getSettings(): Settings {
   const rows = db.prepare('SELECT key, value FROM settings').all() as { key: string; value: string }[];
   const map = Object.fromEntries(rows.map(r => [r.key, r.value]));

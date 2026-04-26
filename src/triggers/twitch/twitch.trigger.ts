@@ -1,6 +1,6 @@
 import { EventSubWsListener } from '@twurple/eventsub-ws';
 import type { BaseTrigger, SongRequestEvent } from '../base.trigger.js';
-import { buildApiClient, isTwitchAuthorized } from './twitch.auth.js';
+import { buildApiClient, isTwitchAuthorized, resetTwitchAuth, isTwitchAuthError } from './twitch.auth.js';
 import { ensureRewardExists } from './twitch.rewards.js';
 import { config } from '../../config.js';
 
@@ -21,15 +21,25 @@ export class TwitchTrigger implements BaseTrigger {
     ) => Promise<void>
   ): Promise<void> {
     if (!isTwitchAuthorized()) {
-      console.warn('[Twitch] Не авторизован, триггер не запущен');
+      console.warn('[Twitch] Не авторизован, триггер не запущен. Откройте /setup и подключите Twitch.');
       return;
     }
 
     await this.listener?.stop();
     this.listener = null;
 
-    const apiClient = buildApiClient();
-    this.rewardId = await ensureRewardExists(apiClient);
+    let apiClient: ReturnType<typeof buildApiClient>;
+    try {
+      apiClient = buildApiClient();
+      this.rewardId = await ensureRewardExists(apiClient);
+    } catch (err) {
+      if (isTwitchAuthError(err)) {
+        resetTwitchAuth();
+        console.warn('[Twitch] Токен инвалидирован (вероятно, сменился пароль). Откройте /setup и переподключите Twitch.');
+        return;
+      }
+      throw err;
+    }
 
     this.listener = new EventSubWsListener({ apiClient });
 
